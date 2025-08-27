@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ nến BTC</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <style>
+        #auth-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .auth-card {
+            background: #222;
+            padding: 30px 24px 24px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            min-width: 300px;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 18px;
+            text-align: center;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 14px;
+            border-radius: 6px;
+            border: none;
+            background: #333;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(90deg, #26a69a, #1976d2);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .auth-card button:hover {
+            background: linear-gradient(90deg, #1976d2, #26a69a);
+        }
+
+        .msg {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 15px;
+        }
+    </style>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #181818;
+            color: #fff;
+        }
+
+        #chart-container {
+            width: 90vw;
+            max-width: 900px;
+            margin: 40px auto;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chart-container">
+        <h2>Biểu đồ nến BTC/USDT</h2>
+        <div id="btcPrice" style="color:#38a69a;font-size:1.5em;font-weight:bold;margin-bottom:8px;text-align:center">
+            Đang tải giá BTCUSDT...</div>
+        <div id="balance" style="color:#ffd600;font-size:1.1em;font-weight:bold;margin-bottom:8px;text-align:center">Số
+            dư: ...</div>
+        <canvas id="btcChart" height="400"></canvas>
+        <div style="text-align:center;color:#aaa;font-size:15px;margin-top:10px;">Dùng chuột để kéo ngang/dọc, cuộn để
+            zoom. Nhấn nút Reset để về mặc định.</div>
+        <div id="trade-form-container"
+            style="margin:30px auto 10px auto;max-width:400px;background:#222;padding:18px 20px;border-radius:10px;box-shadow:0 2px 8px #0002;">
+            <h3 style="color:#38a69a;text-align:center;margin-bottom:10px;">Giao dịch Future BTCUSDT</h3>
+            <form id="tradeForm">
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                    <select id="tradeType"
+                        style="flex:1;padding:8px;border-radius:6px;background:#333;color:#fff;font-size:16px;">
+                        <option value="buy">Mua (Long)</option>
+                        <option value="sell">Bán (Short)</option>
+                    </select>
+                    <input type="number" id="tradeMoney" min="1" step="0.01" placeholder="Số tiền (USDT)"
+                        style="flex:2;padding:8px;border-radius:6px;background:#333;color:#fff;font-size:16px;">
+                </div>
+                <div style="margin-bottom:10px;">
+                    <select id="tradeLeverage"
+                        style="width:100%;padding:8px;border-radius:6px;background:#333;color:#fff;font-size:16px;">
+                        <option value="1">Đòn bẩy x1</option>
+                        <option value="2">Đòn bẩy x2</option>
+                        <option value="5">Đòn bẩy x5</option>
+                        <option value="10">Đòn bẩy x10</option>
+                        <option value="20">Đòn bẩy x20</option>
+                        <option value="50">Đòn bẩy x50</option>
+                        <option value="100">Đòn bẩy x100</option>
+                        <option value="200">Đòn bẩy x200</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:10px;color:#aaa;font-size:14px;text-align:center;">Giá market: <span
+                        id="marketPrice">...</span> USDT</div>
+                <button type="submit"
+                    style="width:100%;padding:10px;background:linear-gradient(90deg,#26a69a,#1976d2);color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;">Thực
+                    hiện giao dịch</button>
+                <div id="tradeMsg" style="margin-top:10px;text-align:center;font-size:15px;"></div>
+            </form>
+        </div>
+        <div id="history-container"
+            style="max-width:600px;margin:30px auto 0 auto;background:#222;padding:18px 20px;border-radius:10px;box-shadow:0 2px 8px #0002;">
+            <h3 style="color:#ffd600;text-align:center;margin-bottom:10px;">Lịch sử giao dịch</h3>
+            <table id="tradeHistory" style="width:100%;border-collapse:collapse;color:#fff;font-size:15px;">
+                <style>
+                    #tradeHistory th,
+                    #tradeHistory td {
+                        border: 1px solid #444;
+                        padding: 8px 6px;
+                        text-align: center;
+                    }
+
+                    #tradeHistory th {
+                        background: #222;
+                        color: #ffd600;
+                        font-weight: bold;
+                    }
+
+                    #tradeHistory tr {
+                        transition: background 0.2s;
+                    }
+
+                    #tradeHistory tr:hover {
+                        background: #333;
+                    }
+                </style>
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Loại</th>
+                        <th>Khối lượng</th>
+                        <th>Giá vào</th>
+                        <th>Đòn bẩy</th>
+                        <th>Lãi/Lỗ</th>
+                        <th>Đóng lệnh</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        async function closeTrade(tradeId, btn) {
+            if (!confirm('Bạn chắc chắn muốn đóng lệnh này?')) return;
+            btn.disabled = true;
+            btn.textContent = 'Đang đóng...';
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/trade/close', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ tradeId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(`Đã đóng lệnh! Lãi/Lỗ: ${typeof data.pnl === 'number' ? data.pnl.toFixed(2) : data.pnl} USDT`);
+                    fetchBalance();
+                    fetchHistory();
+                } else {
+                    alert(data.message || 'Lỗi đóng lệnh');
+                    btn.disabled = false;
+                    btn.textContent = 'Đóng lệnh';
+                }
+            } catch (err) {
+                alert('Lỗi kết nối server');
+                btn.disabled = false;
+                btn.textContent = 'Đóng lệnh';
+            }
+        }
+        window.closeTrade = closeTrade;
+        async function fetchBalance() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/user/me', { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
+                if (!res.ok) {
+                    let msg = 'Không lấy được số dư';
+                    try {
+                        const errData = await res.json();
+                        if (errData && errData.message) msg += ': ' + errData.message;
+                    } catch { }
+                    throw new Error(msg);
+                }
+                const data = await res.json();
+                document.getElementById('balance').textContent = `Số dư: ${parseFloat(data.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+            } catch (err) {
+                document.getElementById('balance').textContent = 'Số dư: ...';
+                document.getElementById('balance').title = err.message;
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/trade/history', { headers: { 'Authorization': token ? `Bearer ${token}` : '' } });
+                if (!res.ok) throw new Error('Không lấy được lịch sử');
+                const data = await res.json();
+                const tbody = document.querySelector('#tradeHistory tbody');
+                tbody.innerHTML = '';
+                data.forEach(trade => {
+                    const tr = document.createElement('tr');
+                    let pnl = trade.pnl !== undefined ? trade.pnl : '...';
+                    let pnlColor = pnl > 0 ? '#38a69a' : (pnl < 0 ? '#e53935' : '#fff');
+                    let closeBtn = '';
+                    if (!trade.closed) {
+                        closeBtn = `<button style='padding:4px 10px;background:#e53935;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:13px' onclick='closeTrade(${trade.id}, this)'>Đóng lệnh</button>`;
+                    } else {
+                        closeBtn = `<span style='color:#aaa;font-size:13px'>Đã đóng</span>`;
+                    }
+                    tr.innerHTML = `<td>${new Date(trade.createdAt).toLocaleString('vi-VN')}</td><td style='color:${trade.type == "buy" ? "#38a69a" : "#e53935"};font-weight:bold'>${trade.type == "buy" ? "Mua" : "Bán"}</td><td>${trade.amount}</td><td>${trade.price}</td><td>x${trade.leverage || 1}</td><td style='color:${pnlColor};font-weight:bold'>${typeof pnl === 'number' ? pnl.toFixed(2) : pnl}</td><td>${closeBtn}</td>`;
+                    tbody.appendChild(tr);
+                });
+                async function closeTrade(tradeId, btn) {
+                    if (!confirm('Bạn chắc chắn muốn đóng lệnh này?')) return;
+                    btn.disabled = true;
+                    btn.textContent = 'Đang đóng...';
+                    const token = localStorage.getItem('token');
+                    try {
+                        const res = await fetch('/api/trade/close', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ tradeId })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            alert(`Đã đóng lệnh! Lãi/Lỗ: ${typeof data.pnl === 'number' ? data.pnl.toFixed(2) : data.pnl} USDT`);
+                            fetchBalance();
+                            fetchHistory();
+                        } else {
+                            alert(data.message || 'Lỗi đóng lệnh');
+                            btn.disabled = false;
+                            btn.textContent = 'Đóng lệnh';
+                        }
+                    } catch (err) {
+                        alert('Lỗi kết nối server');
+                        btn.disabled = false;
+                        btn.textContent = 'Đóng lệnh';
+                    }
+                }
+            } catch (err) {
+                document.querySelector('#tradeHistory tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e53935;">Không lấy được lịch sử</td></tr>';
+            }
+        }
+
+        document.getElementById('tradeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const type = document.getElementById('tradeType').value;
+            const money = parseFloat(document.getElementById('tradeMoney').value);
+            const leverage = parseInt(document.getElementById('tradeLeverage').value);
+            const price = window.currentMarketPrice;
+            const msgDiv = document.getElementById('tradeMsg');
+            msgDiv.textContent = '';
+            if (!money || money <= 0) {
+                msgDiv.textContent = 'Vui lòng nhập số tiền hợp lệ!';
+                msgDiv.style.color = '#e53935';
+                return;
+            }
+            // Tính số lượng BTC theo đòn bẩy
+            const amount = +((money * leverage) / price).toFixed(6);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Bạn chưa đăng nhập hoặc token bị thiếu!');
+                msgDiv.textContent = 'Vui lòng đăng nhập lại!';
+                msgDiv.style.color = '#e53935';
+                return;
+            }
+            try {
+                const res = await fetch('/api/trade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ type, symbol: 'BTCUSDT', amount, price, leverage })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgDiv.textContent = data.message;
+                    msgDiv.style.color = '#38a69a';
+                    fetchBalance();
+                    fetchHistory();
+                } else {
+                    msgDiv.textContent = data.message || 'Lỗi giao dịch';
+                    msgDiv.style.color = '#e53935';
+                }
+            } catch (err) {
+                msgDiv.textContent = 'Lỗi kết nối server';
+                msgDiv.style.color = '#e53935';
+            }
+        });
+
+        async function fetchCandles() {
+            try {
+                const res = await fetch('/api/chart/btc');
+                if (!res.ok) throw new Error('Không lấy được dữ liệu nến');
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) throw new Error('Không có dữ liệu nến');
+                return data;
+            } catch (err) {
+                document.getElementById('chart-container').innerHTML += `<div style='color:red;text-align:center;'>${err.message}</div>`;
+                return [];
+            }
+        }
+        function toCandleData(data) {
+            return data.map(c => ({
+                x: new Date(c.openTime),
+                o: c.open,
+                h: c.high,
+                l: c.low,
+                c: c.close
+            }));
+        }
+        let chartInstance = null;
+        async function renderChart() {
+            const raw = await fetchCandles();
+            if (!raw.length) return;
+            // Hiển thị giá BTCUSDT
+            const lastCandle = raw[raw.length - 1];
+            const price = lastCandle.close; // close price
+            document.getElementById('btcPrice').textContent = `Giá BTCUSDT: ${parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+            document.getElementById('marketPrice').textContent = parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            window.currentMarketPrice = price;
+
+            const ctx = document.getElementById('btcChart').getContext('2d');
+            if (!chartInstance) {
+                chartInstance = new Chart(ctx, {
+                    type: 'candlestick',
+                    data: {
+                        datasets: [{
+                            label: 'BTC/USDT',
+                            data: toCandleData(raw),
+                            color: { up: 'rgba(38,166,154,0.7)', down: 'rgba(239,83,80,0.7)', unchanged: 'rgba(255,255,255,0.7)' },
+                            barThickness: 6
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { labels: { color: '#fff' } },
+                            zoom: {
+                                pan: { enabled: true, mode: 'xy' },
+                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+                            }
+                        },
+                        scales: {
+                            x: { type: 'time', time: { unit: 'hour' }, ticks: { color: '#fff' } },
+                            y: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            } else {
+                chartInstance.data.datasets[0].data = toCandleData(raw);
+                chartInstance.update('none');
+            }
+        }
+        renderChart();
+        fetchBalance();
+        fetchHistory();
+        setInterval(renderChart, 3000);
+        setInterval(fetchHistory, 3000);
+    </script>
+</body>
+
+</html>

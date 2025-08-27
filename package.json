@@ -1,0 +1,26 @@
+{
+    "name": "svfuture-demo",
+    "version": "1.0.0",
+    "description": "Demo chơi future crypto bằng Express.js",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.11.0",
+        "bcryptjs": "^2.4.3",
+        "chart.js": "^4.5.0",
+        "chartjs-adapter-date-fns": "^3.0.0",
+        "chartjs-chart-financial": "^0.2.1",
+        "dotenv": "^16.0.0",
+        "express": "^4.18.2",
+        "jsonwebtoken": "^9.0.0",
+        "mysql2": "^3.10.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.0"
+    }
+}
