@@ -241,7 +241,7 @@
                     } else {
                         closeBtn = `<span style='color:#aaa;font-size:13px'>Đã đóng</span>`;
                     }
-                    tr.innerHTML = `<td>${new Date(trade.createdAt).toLocaleString('vi-VN')}</td><td style='color:${trade.type == "buy" ? "#38a69a" : "#e53935"};font-weight:bold'>${trade.type == "buy" ? "Mua" : "Bán"}</td><td>${trade.amount}</td><td>${trade.price}</td><td>x${trade.leverage || 1}</td><td style='color:${pnlColor};font-weight:bold'>${typeof pnl === 'number' ? pnl.toFixed(2) : pnl}</td><td>${closeBtn}</td>`;
+                    tr.innerHTML = `<td>${new Date(trade.createdAt).toLocaleString('vi-VN')}</td><td style='color:${trade.type == "buy" ? "#38a69a" : "#e53935"};font-weight:bold'>${trade.type == "buy" ? "Mua" : "Bán"}</td><td>${trade.amount}</td><td>${trade.price} USDT</td><td>x${trade.leverage || 1}</td><td style='color:${pnlColor};font-weight:bold'>${typeof pnl === 'number' ? pnl.toFixed(2) + ' USDT' : pnl}</td><td>${closeBtn}</td>`;
                     tbody.appendChild(tr);
                 });
                 async function closeTrade(tradeId, btn) {

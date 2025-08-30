@@ -25,9 +25,9 @@ router.post('/close', auth, async (req, res) => {
         let pnl = 0;
         const leverage = trade.leverage || 1;
         if (trade.type === 'buy') {
-            pnl = (currentPrice - trade.price) * trade.amount * leverage;
+            pnl = (currentPrice - trade.price) * trade.amount;
         } else {
-            pnl = (trade.price - currentPrice) * trade.amount * leverage;
+            pnl = (trade.price - currentPrice) * trade.amount;
         }
         // Cộng lại ký quỹ + lãi/lỗ về tài khoản
         const [userRows] = await db.execute('SELECT * FROM users WHERE id = ?', [req.user.userId]);
